@@ -181,6 +181,23 @@
   .foot-links { display: flex; gap: 1.5rem; }
   .contact-intro .contact-alt { margin-top: 1rem; }
   .contact-alt a { color: var(--white); text-underline-offset: 4px; }
+
+  /* Cursor shadow: difference blend keeps it visible on white and black sections */
+  .cursor-shadow {
+    position: fixed;
+    top: -7rem;
+    left: -7rem;
+    z-index: 20;
+    width: 14rem;
+    height: 14rem;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.18), transparent);
+    mix-blend-mode: difference;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .cursor-shadow.is-visible { opacity: 1; }
 </style>
 </head>
 <body>
@@ -347,6 +364,8 @@
   </div>
 </footer>
 
+<div class="cursor-shadow" id="cursor-shadow" aria-hidden="true"></div>
+
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -355,6 +374,16 @@
   const emailLink = document.getElementById('email-link');
   emailLink.href = 'mailto:' + addr;
   emailLink.textContent = addr;
+
+  // Follows the mouse on devices with one, unless the visitor prefers reduced motion
+  if (matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)').matches) {
+    const shadow = document.getElementById('cursor-shadow');
+    document.addEventListener('mousemove', (e) => {
+      shadow.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      shadow.classList.add('is-visible');
+    });
+    document.documentElement.addEventListener('mouseleave', () => shadow.classList.remove('is-visible'));
+  }
 
   const form = document.getElementById('contact-form');
   const statusEl = document.getElementById('form-status');
