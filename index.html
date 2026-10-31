@@ -62,6 +62,11 @@
     margin: 0 0 3.5rem;
     max-width: 14ch;
   }
+  /* Headline reveal: JS wraps each rendered line, then restores the plain text */
+  .hero h1.is-loading { visibility: hidden; }
+  .hero h1 .line { display: block; overflow: hidden; padding-bottom: 0.2em; margin-bottom: -0.2em; }
+  .hero h1 .line span { display: block; animation: line-up 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  @keyframes line-up { from { transform: translateY(110%); } to { transform: none; } }
   .hero-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem; align-items: end; border-top: 1px solid var(--black); padding-top: 1.5rem; }
   .hero-foot p { margin: 0; font-size: 1.15rem; max-width: 38rem; }
   @media (max-width: 700px) {
@@ -103,6 +108,13 @@
     gap: 1rem 3rem;
     padding: 1.75rem 0;
     border-bottom: 1px solid var(--black);
+  }
+  /* Row hover: box-shadow extends the black past the text without shifting the layout */
+  .services li { transition: background-color 0.25s, box-shadow 0.25s, color 0.25s; }
+  .services p { transition: color 0.25s; }
+  @media (hover: hover) {
+    .services li:hover { background: var(--black); box-shadow: -1rem 0 0 var(--black), 1rem 0 0 var(--black); color: var(--white); }
+    .services li:hover p { color: var(--grey-dark); }
   }
   .services h3 { font-weight: 600; font-size: 1.5rem; line-height: 1.2; letter-spacing: -0.02em; margin: 0; }
   .services p { margin: 0; color: var(--grey); max-width: 38rem; }
@@ -388,6 +400,28 @@
       shadow.classList.add('is-visible');
     });
     document.documentElement.addEventListener('mouseleave', () => shadow.classList.remove('is-visible'));
+  }
+
+  // Reveals the headline line by line, measuring lines so it works at any screen width
+  if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    const headline = document.querySelector('.hero h1');
+    const text = headline.textContent;
+    headline.classList.add('is-loading');
+    document.fonts.ready.then(() => {
+      headline.innerHTML = text.split(' ').map((word) => `<span>${word}</span>`).join(' ');
+      const lines = [];
+      let top = null;
+      [...headline.children].forEach((word) => {
+        if (word.offsetTop !== top) {
+          lines.push([]);
+          top = word.offsetTop;
+        }
+        lines[lines.length - 1].push(word.textContent);
+      });
+      headline.innerHTML = lines.map((line, i) => `<span class="line"><span style="animation-delay: ${i * 0.12}s">${line.join(' ')}</span></span>`).join(' ');
+      headline.classList.remove('is-loading');
+      headline.lastElementChild.firstElementChild.addEventListener('animationend', () => { headline.textContent = text; });
+    });
   }
 
   // Fades sections in as they scroll into view, unless the visitor prefers reduced motion
